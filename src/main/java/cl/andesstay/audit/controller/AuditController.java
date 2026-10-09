@@ -15,21 +15,21 @@ import java.util.List;
  * Solo lectura. Roles permitidos: Admin y Auditor.
  */
 @RestController
-@RequestMapping("/api/audit")
+@RequestMapping("/v1/api/audit")
 @RequiredArgsConstructor
 public class AuditController {
 
     private final AuditEventRepository repository;
 
     /** GET /api/audit/reservations/{id}/timeline — Timeline completo de una reserva */
-    @GetMapping("/reservations/{id}/timeline")
+    @GetMapping("/v1/reservations/{id}/timeline")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getTimeline(@PathVariable Long id) {
         return ResponseEntity.ok(repository.findByReservationIdOrderByOccurredAtAsc(id));
     }
 
     /** GET /api/audit/events?from=&to= — Eventos en un rango de fechas */
-    @GetMapping("/events")
+    @GetMapping("/v1/events")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getEvents(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -38,14 +38,14 @@ public class AuditController {
     }
 
     /** GET /api/audit/events/actor/{actorId} — Todas las acciones de un usuario */
-    @GetMapping("/events/actor/{actorId}")
+    @GetMapping("/v1/events/actor/{actorId}")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getByActor(@PathVariable String actorId) {
         return ResponseEntity.ok(repository.findByActorIdOrderByOccurredAtDesc(actorId));
     }
 
     /** GET /api/audit/events/type/{eventType} */
-    @GetMapping("/events/type/{eventType}")
+    @GetMapping("/v1/events/type/{eventType}")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getByType(@PathVariable String eventType) {
         return ResponseEntity.ok(repository.findByEventTypeOrderByOccurredAtDesc(eventType));
