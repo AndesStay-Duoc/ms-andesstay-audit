@@ -1,5 +1,7 @@
 package cl.andesstay.audit.controller;
 
+import cl.andesstay.audit.ApiPaths;
+
 import cl.andesstay.audit.domain.AuditEvent;
 import cl.andesstay.audit.repository.AuditEventRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +17,7 @@ import java.util.List;
  * Solo lectura. Roles permitidos: Admin y Auditor.
  */
 @RestController
-@RequestMapping("/v1/api/audit")
+@RequestMapping(ApiPaths.AUDIT)
 @RequiredArgsConstructor
 public class AuditController {
 
