@@ -15,20 +15,11 @@ spring:
     database-platform: org.hibernate.dialect.MySQLDialect
     open-in-view: false
   kafka:
+    # Lo único que se configura aquí es dónde está el clúster. Deserializers, grupo, confirmación
+    # manual, paquetes de confianza, concurrencia y reintentos viven en config/KafkaConsumerConfig
+    # y config/KafkaErrorConfig, comentados uno a uno: son decisiones de diseño del consumidor y no
+    # parámetros de entorno.
     bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
-    consumer:
-      group-id: audit-consumer-group
-      auto-offset-reset: earliest
-      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
-      properties:
-        spring.json.trusted.packages: "*"
-    listener:
-      ack-mode: manual
-    producer:
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
-      acks: all
   security:
     oauth2:
       resourceserver:
@@ -43,6 +34,19 @@ spring:
 
 andesstay:
   kafka:
+    # Permite arrancar el servicio sin clúster de Kafka: apaga la topología de Streams y, con
+    # listener.auto-startup en false, también el consumidor. La API de consulta del timeline sigue
+    # sirviendo lo que ya haya en la base.
+    enabled: ${ANDESSTAY_KAFKA_ENABLED:true}
     topics:
       reservations-events: reservations.events
       audit-timeline: audit.timeline
+    groups:
+      # Un grupo por responsabilidad. El de la topología de Streams es su application-id, que Kafka
+      # trata como un consumer group más y se ve igual en Kafka UI.
+      audit-timeline: audit-timeline-group
+    streams:
+      application-id: audit-timeline-streams
+      # Streams guarda aquí su estado local. En el contenedor apunta a un volumen: sin él, cada
+      # reinicio obliga a reconstruirlo desde el tema.
+      state-dir: ${KAFKA_STREAMS_STATE_DIR:./target/kafka-streams}
