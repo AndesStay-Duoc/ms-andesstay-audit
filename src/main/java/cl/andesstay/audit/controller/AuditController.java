@@ -15,6 +15,11 @@ import java.util.List;
 
 /**
  * Solo lectura. Roles permitidos: Admin y Auditor.
+ *
+ * LA VERSION VA UNA SOLA VEZ. ApiPaths.AUDIT ya vale "/api/v1/audit", asi que los @GetMapping
+ * cuelgan de el sin repetir "/v1": antes lo repetian y las rutas reales eran
+ * /api/v1/audit/v1/events, que ni el contrato ni el frontend ni el gateway esperaban. La version
+ * se declara en ApiPaths y en ningun otro sitio, que es justo lo que esa clase promete.
  */
 @RestController
 @RequestMapping(ApiPaths.AUDIT)
@@ -23,15 +28,15 @@ public class AuditController {
 
     private final AuditEventRepository repository;
 
-    /** GET /api/audit/reservations/{id}/timeline — Timeline completo de una reserva */
-    @GetMapping("/v1/reservations/{id}/timeline")
+    /** GET /api/v1/audit/reservations/{id}/timeline — Timeline completo de una reserva */
+    @GetMapping("/reservations/{id}/timeline")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getTimeline(@PathVariable Long id) {
         return ResponseEntity.ok(repository.findByReservationIdOrderByOccurredAtAsc(id));
     }
 
-    /** GET /api/audit/events?from=&to= — Eventos en un rango de fechas */
-    @GetMapping("/v1/events")
+    /** GET /api/v1/audit/events?from=&to= — Eventos en un rango de fechas */
+    @GetMapping("/events")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getEvents(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime from,
@@ -39,15 +44,15 @@ public class AuditController {
         return ResponseEntity.ok(repository.findByOccurredAtBetweenOrderByOccurredAtDesc(from, to));
     }
 
-    /** GET /api/audit/events/actor/{actorId} — Todas las acciones de un usuario */
-    @GetMapping("/v1/events/actor/{actorId}")
+    /** GET /api/v1/audit/events/actor/{actorId} — Todas las acciones de un usuario */
+    @GetMapping("/events/actor/{actorId}")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getByActor(@PathVariable String actorId) {
         return ResponseEntity.ok(repository.findByActorIdOrderByOccurredAtDesc(actorId));
     }
 
-    /** GET /api/audit/events/type/{eventType} */
-    @GetMapping("/v1/events/type/{eventType}")
+    /** GET /api/v1/audit/events/type/{eventType} — Eventos de un tipo */
+    @GetMapping("/events/type/{eventType}")
     @PreAuthorize("hasAnyRole('Admin', 'Auditor')")
     public ResponseEntity<List<AuditEvent>> getByType(@PathVariable String eventType) {
         return ResponseEntity.ok(repository.findByEventTypeOrderByOccurredAtDesc(eventType));
