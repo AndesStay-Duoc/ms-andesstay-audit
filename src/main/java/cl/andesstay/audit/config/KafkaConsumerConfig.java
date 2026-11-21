@@ -82,12 +82,12 @@ public class KafkaConsumerConfig {
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, TimelineEvent>
-            timelineKafkaListenerContainerFactory(CommonErrorHandler manejadorDeErrores) {
+            timelineKafkaListenerContainerFactory(CommonErrorHandler manejadorDeErroresKafka) {
 
         var factory = new ConcurrentKafkaListenerContainerFactory<String, TimelineEvent>();
         factory.setConsumerFactory(timelineConsumerFactory());
         factory.setConcurrency(PARTICIONES_DEL_TEMA);
-        factory.setCommonErrorHandler(manejadorDeErrores);
+        factory.setCommonErrorHandler(manejadorDeErroresKafka);
         factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
         return factory;
     }
