@@ -2,8 +2,11 @@ package cl.andesstay.audit.streams;
 
 import cl.andesstay.audit.messaging.events.ReservationEvent;
 import cl.andesstay.audit.messaging.events.TimelineEvent;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.kafka.support.JacksonUtils;
 import org.springframework.kafka.support.serializer.JsonSerde;
 
 /**
@@ -19,6 +22,12 @@ import org.springframework.kafka.support.serializer.JsonSerde;
  * Los paquetes de confianza se limitan a cl.andesstay. Antes estaba en "*", que desactiva la
  * proteccion de JsonDeserializer y permite instanciar cualquier clase del classpath a partir de
  * un mensaje. Con un tema interno el riesgo es bajo, pero no es gratis y no hace falta.
+ *
+ * Y UNA TERCERA: LAS FECHAS EN ISO 8601. Con el ObjectMapper por defecto, lo que esta topologia
+ * escribe en audit.timeline llevaba el timestamp como segundos desde 1970 (1795255200.000000000),
+ * y el contrato dice "2026-11-21T10:00:00Z". El mapper propio solo cambia como se ESCRIBE: al leer,
+ * JavaTimeModule acepta los dos formatos, asi que los mensajes antiguos de reservations.events se
+ * siguen procesando.
  */
 @Configuration
 public class SerdesDeAuditoria {
@@ -36,7 +45,9 @@ public class SerdesDeAuditoria {
     }
 
     private static <T> JsonSerde<T> serdeDe(Class<T> tipo) {
-        JsonSerde<T> serde = new JsonSerde<>(tipo);
+        ObjectMapper mapeador = JacksonUtils.enhancedObjectMapper()
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        JsonSerde<T> serde = new JsonSerde<>(tipo, mapeador);
         serde.deserializer().addTrustedPackages(PAQUETES_DE_CONFIANZA);
         return serde.ignoreTypeHeaders();
     }
