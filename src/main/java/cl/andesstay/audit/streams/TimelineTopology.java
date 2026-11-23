@@ -28,8 +28,10 @@ import org.springframework.context.annotation.Configuration;
  * transforma y un consumidor que solo persiste, y cada una falla y se reintenta por su cuenta.
  *
  * LA CLAVE NO SE TOCA. Entra y sale el reservationId, asi que los hechos de una misma reserva
- * siguen cayendo en la misma particion y se consumen en orden. Como audit.timeline esta compactado
- * por clave, ademas, el ultimo hecho de cada reserva sobrevive a la retencion.
+ * siguen cayendo en la misma particion y se consumen en orden. Es tambien la clave por la que se
+ * compacta audit.timeline: dentro de sus treinta dias deja el hecho mas reciente de cada reserva.
+ * Pasada la retencion no queda ninguno, porque la politica es compact,delete; el historial
+ * completo lo guarda AuditTimelineConsumer en AUDIT_EVENTS.
  *
  * EL FILTRO descarta lo que no se puede auditar: un evento sin payload o sin reserva no identifica
  * ninguna entidad, y registrarlo solo ensuciaria el timeline. Se deja constancia en el log, que es
