@@ -72,6 +72,13 @@ public class AuditService {
         if (hecho.eventId() == null || hecho.eventId().isBlank()) {
             throw new IllegalArgumentException("El hecho no trae eventId: sin el no hay idempotencia.");
         }
+        // Obligatorio en el contrato del envelope. Antes se toleraba y se fechaba con la hora del
+        // consumo, pero eso es inventar un dato: un hecho sin momento no se puede ubicar en el
+        // timeline, y fecharlo "ahora" lo coloca en un lugar falso sin que nadie se entere. Mejor
+        // a la DLT, donde queda a la vista.
+        if (hecho.timestamp() == null) {
+            throw new IllegalArgumentException("El hecho no trae timestamp: no se puede ubicar en el timeline.");
+        }
         if (hecho.payload() == null || hecho.payload().entidadId() == null) {
             throw new IllegalArgumentException("El hecho no identifica ninguna entidad.");
         }
@@ -112,9 +119,11 @@ public class AuditService {
      * de milisegundos, pero basta un rato de retraso, una reposicion de offsets o una relectura del
      * tema desde el principio para que el timeline entero quede fechado en el momento de la
      * relectura. El instante del hecho viene en el evento y es el unico que no miente.
+     *
+     * Ya no hay respaldo con Instant.now() para un timestamp nulo: validar lo rechaza antes, por
+     * la misma razon.
      */
     private LocalDateTime momentoDelHecho(Instant instante) {
-        Instant efectivo = instante == null ? Instant.now() : instante;
-        return LocalDateTime.ofInstant(efectivo, ZoneId.systemDefault());
+        return LocalDateTime.ofInstant(instante, ZoneId.systemDefault());
     }
 }

@@ -143,6 +143,18 @@ class AuditServiceTest {
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("no es numerico");
         }
+
+        @Test
+        @DisplayName("Sin timestamp se rechaza, en vez de fecharlo con la hora del consumo")
+        void sinTimestamp() {
+            TimelineEvent sinMomento = new TimelineEvent("reservation.created", "evt-9",
+                    null, "t", "c", "origen", actor(), payload("42"));
+
+            assertThatThrownBy(() -> service.registrar(sinMomento))
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("timestamp");
+            verify(repository, never()).save(any());
+        }
     }
 
     // ── Apoyo ────────────────────────────────────────────────────────────────
